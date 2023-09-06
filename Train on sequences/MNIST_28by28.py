@@ -334,61 +334,6 @@ def test(net, test_data, test_label,sampling=False):
     print("xi_rec",np.sum(net.xi_rec**2))
     return accuracies/batches
 
-batches = 200
-b_size = 128
-llr = pow(10,-2)
-learn_rate = np.array([llr,llr,llr,llr,llr,llr,llr,llr,llr])
-n_in, n_rec, n_out = 28, 100, 10
-optimizer = 'Adam'
-net1 = RNN(n_in, n_rec, n_out)
-print('Training begin.')
-data,targets = uni_permu(train_data,train_label,0)
-F0,hb0 = net1.inference((data[0:500]).T.reshape(28,28,500),targets[0:500].T,0.1,f,df,0)
-CEs = [F0*1]
-accuracies = []
-Total_epoch = 100
-m_in_all=[]
-m_out_all=[]
-m_rec_all=[]
-pi_in_all=[]
-pi_out_all=[]
-pi_rec_all=[]
-sig_in_all=[]
-sig_out_all=[]
-sig_rec_all=[]        
-print("initially",CEs)
-if __name__ == '__main__':
-	import time
-	start = time.time()
-	for epoch in range(Total_epoch):
-		print('Epoch {}'.format(epoch))
-	#     m_in_all.append(net1.m_in*1)
-	#     m_out_all.append(net1.m_out*1)
-	#     m_rec_all.append(net1.m_rec*1)
-            
-	#     pi_in_all.append(net1.pi_in*1)
-	#     pi_out_all.append(net1.pi_out*1)
-	#     pi_rec_all.append(net1.pi_rec*1)
-            
-	#     sig_in_all.append(net1.xi_in*1)
-	#     sig_out_all.append(net1.xi_out*1)
-	#     sig_rec_all.append(net1.xi_rec*1)    
-    
-
-
-
-
-
-		lr = decay(epoch+1, 1e-3, learn_rate, 40)
-		CE = train(net1, b_size, batches, train_data, train_label, lr,epoch)    
-    		CEs.append(CE[0]*1)
-    		accuracy = test(net1, test_data, test_label,sampling=False)
-   	 	accuracies.append(accuracy)
-   		 #accuracy2=test(net1, test_data, test_label,sampling=True)
-    		print(' Accuracy = {:.2f}%.'.format(accuracy))
-    		print("F is",CEs)
-    		#print(' CE = {:.4f}; Sampling Accuracy = {:.2f}%.'.format(CE,accuracy2*100))
-		end = time.time()
 
 
 
