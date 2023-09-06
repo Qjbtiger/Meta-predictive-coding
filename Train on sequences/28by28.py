@@ -335,7 +335,6 @@ def test(net, test_data, test_label,sampling=False):
     print("xi_rec",np.sum(net.xi_rec**2))
     return accuracies/batches
 
-
 batches = 200
 b_size = 128
 llr = pow(10,-2)
