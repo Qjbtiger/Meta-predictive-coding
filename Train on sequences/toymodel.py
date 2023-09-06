@@ -487,37 +487,3 @@ class Adam:
         theta -= self.lr*((self.mhat/(pow(self.shat,0.5)+self.epislon))+self.decay*theta)
         return theta
 
-if __name__ == '__main__':
-	M = 2
-	R = 1
-	N = 10
-	Full_data = np.array(full_dataset2(M,R,N)).reshape(26*(M**(N)),26,1+N*R)
-	train_data1 = Full_data[:,:,0:N*R]
-	train_label1 = Full_data[:,:,1:N*R+1]
-	er_al=[]
-	n_in, n_rec, n_out = 26, 100, 26
-	for beta in [0.05]:
-		print("beta is", beta)
-    		M = int(beta*n_rec)
-		if M<=100:
-			b_size=M
-     			batches=1
-    		if M>100:
-			b_size=200
-        		batches = int(M/b_size)
-    		er_cons = []
-   		for i in range(1):
-			print("M is", M)
-        		n_in, n_rec, n_out = 26, 100, 26
-        		net1 = RNN(n_in, n_rec, n_out)
-       			print("initially",np.average(net1.test())*1)
-        		print("batches",batches)
-        		sample_ind = random.randint(0, 26624-int(M))
-        		data,targets = uni_permu(train_data1,train_label1,0)
-        		print("sample start",sample_ind)
-        		print("datasize",np.shape(data[sample_ind:sample_ind+M]))
-        		net1.SGD(100,b_size, batches, data[sample_ind:sample_ind+M], targets[sample_ind:sample_ind+M],0.5,20)
-        		er_cons.append(np.average(net1.test())*1)
-		er_al.append(er_cons*1)
-
-
