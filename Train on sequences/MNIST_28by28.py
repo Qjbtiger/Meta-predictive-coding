@@ -39,8 +39,8 @@ def softmax(y):
     sumofexp = np.array(exp_y.sum(axis=0),ndmin=2)
     softmax = exp_y/sumofexp
     return softmax
-import load2
-mnist=(load2.load_mnist(one_hot=True))
+import load
+mnist=(load.load_mnist(one_hot=True))
 train_data = mnist[0][0][0:60000]
 train_label = mnist[0][1][0:60000]
 test_data = mnist[1][0][:10000]
@@ -49,7 +49,6 @@ print(np.shape(train_data))
 print(np.shape(train_label))
 
 
-# In[2]:
 
 
 class RNN:
