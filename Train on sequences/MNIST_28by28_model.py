@@ -1,7 +1,7 @@
 import numpy as np
 import random
 from numpy import log as ln
-
+n_in, n_rec, n_out = 28, 100, 10
 def f(x):
     return np.maximum(0,x)
     
