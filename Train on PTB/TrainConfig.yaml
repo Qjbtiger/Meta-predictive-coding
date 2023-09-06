@@ -1,0 +1,35 @@
+# Config file for training
+
+# Device to use (cuda, mps, cpu or auto)
+device: auto
+
+# Model setting
+model: vanilla # Choice from vanilla, pc, sas, pcsas, transformer
+rnnType: rnn # Choice from rnn, lstm, gru (pc or sas only support for rnn)
+embeddingSize: 300
+hiddenSize: 512
+freezeEmbeddings: false # Whether to freeze embeddings
+preTrained: null # Whether to load pre-trained embeddings. Choice from glove, word2vec_path, null
+# special setting for predictive coding
+eta: 0.01 # Eta parameter
+T: [20, 20, 20, 25, 40, 40, 60, 60, 60, 80, 80, 80, 80, 80, 80, 80, 100, 100, 100, 100] # T parameter
+# special setting for transformer
+numHead: 1
+
+# Dataset (ptb or imdb)
+dataset: ptb
+minFrequence: 5 # the minimum frequence of word stay in corpus
+
+# Training setting
+batchSizes: 128
+numEpoch: 20
+learningRate: 0.001
+sequenceLength: 35 # sequence length when learning
+
+# Recording setting
+reportInterval: 200 # number batches of period report interval
+exportModel: true
+exportModelProgressing: true # may cost large disk space
+exportEmbedding: false
+exportRecord: true
+runId: 8
