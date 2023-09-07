@@ -9,15 +9,11 @@ class SaSLayer(nn.Module):
         self.m = nn.Parameter(torch.Tensor(inFeatures, outFeatures))
         self.pi = nn.Parameter(torch.Tensor(inFeatures, outFeatures))
         self.chi = nn.Parameter(torch.Tensor(inFeatures, outFeatures))
-        # self.pi = torch.zeros(size=(inFeatures, outFeatures), device="cuda")
-        # self.chi = torch.zeros(size=(inFeatures, outFeatures), device="cuda")
         self.inFeature = inFeatures
         self.resetParameters()
     
     def resetParameters(self):
         nn.init.uniform_(self.m, -1 / math.sqrt(self.inFeature), 1 / math.sqrt(self.inFeature))
-        # nn.init.uniform_(self.pi, 0, 0.1)
-        # nn.init.uniform_(self.chi, 0, 0.1)
         nn.init.zeros_(self.pi)
         nn.init.zeros_(self.chi)
 
@@ -33,8 +29,6 @@ class SaSLayer(nn.Module):
             epsilon = torch.normal(0, 1, size=DeltaSquare.size(), device=inputs.device)
         z = G + epsilon * torch.sqrt(DeltaSquare + 1e-10)
 
-        # z = torch.matmul(inputs, self.m)
-
         return z
 
     def clamp(self):
@@ -47,8 +41,6 @@ class RNNSaSLayer(nn.Module):
 
         self.inputLayer = SaSLayer(inputSizes, hiddenSize)
         self.hiddenLayer = SaSLayer(hiddenSize, hiddenSize)
-        # self.inputLayer = nn.Linear(inputSizes, hiddenSize)
-        # self.hiddenLayer = nn.Linear(hiddenSize, hiddenSize)
         
         self.nonlinearity = getattr(nn, nonlinearity)()
         self.hiddenSize = hiddenSize
@@ -143,22 +135,6 @@ class RNNLayerForPC(nn.Module):
             self.inputLayer.clamp()
             self.hiddenLayer.clamp()
 
-class EmbeddingSaSLayer(nn.Module):
-    def __init__(self, vocabularySize, embeddingSize):
-        super(EmbeddingSaSLayer, self).__init__()
-
-        self.weight = SaSLayer(vocabularySize, embeddingSize)
-        mask = torch.eye(vocabularySize)
-        self.register_buffer("mask", mask)
-
-    def forward(self, inputs):
-        outputs = self.weight(self.mask[inputs])
-
-        return outputs
-    
-    def clamp(self):
-        self.weight.clamp()
-
 class BaseLanguageModel(nn.Module):
     def __init__(self, vocabularySize, embeddingSize, preTrainEmbedding=None, fixedEmbedding=False, batchFirst=False):
         super(BaseLanguageModel, self).__init__()
@@ -171,8 +147,6 @@ class BaseLanguageModel(nn.Module):
             self.embedding = nn.Embedding(vocabularySize, embeddingSize)
         else:
             self.embedding = nn.Embedding.from_pretrained(preTrainEmbedding, freeze=fixedEmbedding)
-
-        # self.embedding = EmbeddingSaSLayer(vocabularySize, embeddingSize)
 
 class BaseRNNModel(BaseLanguageModel):
     """
@@ -211,8 +185,6 @@ class VanillaRNN(BaseRNNModel):
 
         # Reshape output to (batch_size*sequence_length, hidden_size)
         out = out.reshape(-1, out.size(2))
-        
-        # out = self.dropout(out)
 
         # Decode hidden states of all time steps
         out = self.readout(out)
@@ -233,7 +205,6 @@ class PCRNN(BaseRNNModel):
         # With convience of inference, we use batchFirst=False
         super(PCRNN, self).__init__(vocabularySize, embeddingSize, preTrainEmbedding, fixedEmbedding, batchFirst, hiddenSize)
         # But store the user's setting (father class)
-
         self.T = T
         self.eta = eta
         self.rnnTypes = rnnsTypes
@@ -292,25 +263,20 @@ class PCRNN(BaseRNNModel):
             # prediction
             # embedding layer
             x_e = self.embedding(x_i)
-            # epsilon_e = x_e - mu_e
                 
             # recurrent hidden layer
             mu_h, outputs = self.rnn(x_e, x_h, mode="inference", epsilons=(epsilonInput, epsilonHidden))
             epsilon_h = x_h - mu_h
 
             # readout layer
-            # outputs = self.dropout(outputs)
             if self.isSaS:
                 mu_y = self.readout(outputs.reshape(sequenceLength * batchSizes, self.hiddenSize), epsilon=epsilonOutput)
             else:
                 mu_y = self.readout(outputs.reshape(sequenceLength * batchSizes, self.hiddenSize))
             loss = lossFun(mu_y, x_y.reshape(-1))
-            # epsilon_y = torch.autograd.grad(loss, mu_y, retain_graph=True)[0].detach().clone()
 
             # compute energy
-            # F_e = torch.sum(torch.mean(epsilon_e**2, dim=(0, 1))) / 2
             F_h = torch.sum(torch.mean(epsilon_h**2, dim=(0, 1))) / 2
-            # F = (F_e + F_h) + loss
             F = F_h + loss
             
             logging.debug("Iteration: {}, F_h: {}, F: {}, F: {}".format(t, F_h.item(), F.item(), loss.item()))
@@ -388,26 +354,6 @@ class CBOW(nn.Module):
 
         return outputs
 
-# class Transformer(BaseLanguageModel):
-#     def __init__(self, vocabularySize, embeddingSize, preTrainEmbedding=None, fixedEmbedding=False, batchFirst=False, hiddenSize=128, numHead=1, **kwargs):
-#         super(Transformer, self).__init__(vocabularySize, embeddingSize, preTrainEmbedding, fixedEmbedding, batchFirst)
-
-#         # self.dropout = nn.Dropout(0.2)
-        
-#         encoderLayer = nn.TransformerEncoderLayer(embeddingSize, numHead, hiddenSize, dropout=0, batch_first=batchFirst)
-#         self.encoder = nn.TransformerEncoder(encoderLayer, num_layers=1)
-
-#         self.decoder = nn.Linear(embeddingSize, vocabularySize)
-
-#     def forward(self, inputs):
-#         outputs = self.embedding(inputs)
-#         outputs = self.encoder(outputs)
-#         # Reshape output to (batch_size*sequence_length, hidden_size)
-#         outputs = outputs.reshape(-1, outputs.size(2))
-#         outputs = self.decoder(outputs)
-
-#         return outputs
-
 class Transformer(BaseLanguageModel):
     def __init__(self, vocabularySize, embeddingSize, preTrainEmbedding=None, fixedEmbedding=False, batchFirst=False, hiddenSize=128, numHead=1, **kwargs):
         super(Transformer, self).__init__(vocabularySize, embeddingSize, preTrainEmbedding, fixedEmbedding, batchFirst)
@@ -418,6 +364,7 @@ class Transformer(BaseLanguageModel):
         self.WV = nn.Parameter(torch.Tensor(embeddingSize, embeddingSize))
         self.softmax = nn.Softmax()
         self.outProjection = nn.Linear(embeddingSize, embeddingSize)
+
         # Feedforward
         self.linear1 = nn.Linear(embeddingSize, hiddenSize)
         self.linear2 = nn.Linear(hiddenSize, embeddingSize)
